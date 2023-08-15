@@ -1,0 +1,50 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-myproject
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: myproject
+      MYSQL_USER: myproject
+      MYSQL_PASSWORD: myproject
+    command: --innodb-use-native-aio=0
+    ports:
+      - "32780:3306"
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-myproject
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql-myproject
+      PMA_USER: root
+      PMA_PASSWORD: root
+    restart: always
+    links:
+      - mysql:mysql
+    ports:
+      - '32779:80'
+  wordpress:
+    image: wordpress:php7.4-apache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mysql
+    build: ./php
+    container_name: wordpress-myproject
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: myproject
+      WORDPRESS_DB_USER: myproject
+      WORDPRESS_DB_PASSWORD: myproject
+    volumes:
+      - ./data/html:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+      - ./wordpress/.htaccess:/var/www/html/wordpress/.htaccess
+      - ./wp-install.sh:/tmp/wp-install.sh
+    working_dir: /var/www/html/wordpress
+      
